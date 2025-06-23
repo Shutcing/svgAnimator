@@ -348,59 +348,6 @@ function showStatus(message, type) {
   if (type) statusEl.classList.add(type);
 }
 
-document.getElementById("example1").addEventListener("click", () => {
-  const frame0Input = document.getElementById("frame-input-0");
-  if (frame0Input)
-    frame0Input.value = `<svg viewBox="0 0 100 100"><circle id="shape" cx="50" cy="50" r="20" fill="#4361ee"></circle></svg>`;
-
-  if (frameCounter < 2) addFrameBtn.click();
-
-  setTimeout(() => {
-    const frame1Input = document.getElementById("frame-input-1");
-    if (frame1Input)
-      frame1Input.value = `<svg viewBox="0 0 100 100"><rect id="shape" x="30" y="30" width="40" height="40" fill="#f72585"></rect></svg>`;
-    showStatus(
-      'Пример "Круг в квадрат" с изменением цвета загружен. Нажмите "Загрузить" для каждого кадра.',
-      "success"
-    );
-  }, 100);
-});
-
-document.getElementById("example2").addEventListener("click", () => {
-  const frame0Input = document.getElementById("frame-input-0");
-  if (frame0Input)
-    frame0Input.value = `<svg viewBox="0 0 100 100"><path id="shape" d="M50,15 L61,40 L88,40 L65,55 L75,85 L50,70 L25,85 L35,55 L12,40 L39,40 Z" fill="#f72585"></path></svg>`;
-
-  if (frameCounter < 2) addFrameBtn.click();
-
-  setTimeout(() => {
-    const frame1Input = document.getElementById("frame-input-1");
-    if (frame1Input)
-      frame1Input.value = `<svg viewBox="0 0 100 100"><path id="shape" d="M50,15 C60,25 75,20 80,30 C85,40 95,45 85,55 C75,65 80,80 70,85 C60,90 50,75 50,65 C50,75 40,90 30,85 C20,80 25,65 15,55 C5,45 15,40 20,30 C25,20 40,25 50,15 Z" fill="#4cc9f0"></path></svg>`;
-    showStatus(
-      'Пример "Звезда в сердце" с изменением цвета загружен. Нажмите "Загрузить" для каждого кадра.',
-      "success"
-    );
-  }, 100);
-});
-
-document.getElementById("example3").addEventListener("click", () => {
-  const frame0Input = document.getElementById("frame-input-0");
-  if (frame0Input)
-    frame0Input.value = `<svg viewBox="0 0 100 100"><rect id="shape" x="10" y="10" width="80" height="80" rx="5" fill="#4cc9f0"></rect></svg>`;
-
-  if (frameCounter < 2) addFrameBtn.click();
-
-  setTimeout(() => {
-    const frame1Input = document.getElementById("frame-input-1");
-    if (frame1Input)
-      frame1Input.value = `<svg viewBox="0 0 100 100"><path id="shape" d="M50,10 L80,30 L80,70 L50,90 L20,70 L20,30 Z" fill="#3a0ca3"></path></svg>`;
-    showStatus(
-      'Пример "Анимация логотипа" с изменением цвета загружен. Нажмите "Загрузить" для каждого кадра.',
-      "success"
-    );
-  }, 100);
-});
 
 const initialInput = document.getElementById("frame-input-0");
 if (initialInput)
