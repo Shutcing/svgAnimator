@@ -58,7 +58,8 @@ h1 {
   justify-content: center;
 }
 
-#add-frame-btn {
+#add-frame-btn-start,
+#add-frame-btn-end {
   background: rgba(255, 255, 255, 0.1);
   border: 2px dashed rgba(255, 255, 255, 0.4);
   color: rgba(255, 255, 255, 0.8);
@@ -505,7 +506,7 @@ footer {
   .panel-title {
     font-size: 1.2rem;
   }
-  
+
   .panel-title svg {
     width: 20px;
     height: 20px;
@@ -538,11 +539,11 @@ footer {
   .export-buttons {
     gap: 8px;
   }
-  
+
   .export-button {
     padding: 10px 12px;
   }
-  
+
   .quality {
     padding: 10px;
   }
