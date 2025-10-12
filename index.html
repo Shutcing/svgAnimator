@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SVG Morph Animator | Figma to Animation</title>
+    <title>SVG Animator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.13/dist/MorphSVGPlugin.min.js"></script>
@@ -16,14 +16,29 @@
   <body>
     <div class="container">
       <header>
-        <h1>SVG Morph Animator</h1>
+        <h1>SVG Animator</h1>
       </header>
 
       <div class="quality">
-        <input type="text" class="quality__input" />
+        <input type="text" value="1080" class="quality__input" />
       </div>
 
       <div class="main-content">
+        <div class="add-frame-wrapper">
+          <button id="add-frame-btn-start">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Добавить кадр
+          </button>
+        </div>
+
         <div id="frames-container">
           <div class="panel" data-frame-index="0">
             <div class="panel-title">
@@ -82,7 +97,7 @@
         </div>
 
         <div class="add-frame-wrapper">
-          <button id="add-frame-btn">
+          <button id="add-frame-btn-end">
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -174,5 +189,8 @@
       </div>
     </div>
   </body>
-  <script src="main.js"></script>
+  <script src="state.js"></script>
+  <script src="utils.js"></script>
+  <script src="svg-utils.js"></script>
+  <script src="app.js"></script>
 </html>
