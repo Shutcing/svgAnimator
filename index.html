@@ -188,6 +188,27 @@
         <a id="download-link" class="download-link">Скачать файл</a>
       </div>
     </div>
+    <div id="mapping-modal-overlay" class="modal-overlay">
+      <div id="mapping-modal" class="modal">
+        <div class="modal-header">
+          <h2>Настройка перехода</h2>
+          <button id="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-content">
+          <div class="modal-frame-container">
+            <h3>Кадр N</h3>
+            <div id="modal-frame-from" class="modal-svg-wrapper"></div>
+          </div>
+          <div class="modal-frame-container">
+            <h3>Кадр N+1</h3>
+            <div id="modal-frame-to" class="modal-svg-wrapper"></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="modal-save-btn">Сохранить</button>
+        </div>
+      </div>
+    </div>
   </body>
   <script src="state.js"></script>
   <script src="utils.js"></script>

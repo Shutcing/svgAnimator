@@ -1,5 +1,101 @@
 gsap.registerPlugin(MorphSVGPlugin);
 
+const mappingModalOverlay = document.getElementById("mapping-modal-overlay");
+const modalFrameFrom = document.getElementById("modal-frame-from");
+const modalFrameTo = document.getElementById("modal-frame-to");
+const modalSaveBtn = document.getElementById("modal-save-btn");
+const modalCloseBtn = document.getElementById("modal-close-btn");
+
+const PATH_COLORS = [
+  "#e6194b",
+  "#3cb44b",
+  "#ffe119",
+  "#4363d8",
+  "#f58231",
+  "#911eb4",
+  "#46f0f0",
+  "#f032e6",
+  "#bcf60c",
+  "#fabebe",
+  "#008080",
+  "#e6beff",
+  "#9a6324",
+  "#fffac8",
+  "#800000",
+  "#aaffc3",
+  "#808000",
+  "#ffd8b1",
+  "#000075",
+  "#808080",
+  "#000000",
+  "#ffffff",
+  "#c0c0c0",
+  "#ff7f50",
+  "#6a5acd",
+  "#2e8b57",
+  "#d2691e",
+  "#dc143c",
+  "#00ffff",
+  "#1e90ff",
+  "#ff1493",
+  "#7fff00",
+  "#ff4500",
+  "#20b2aa",
+  "#ff69b4",
+  "#228b22",
+  "#daa520",
+  "#9932cc",
+  "#6495ed",
+  "#8b0000",
+  "#ff00ff",
+  "#00fa9a",
+  "#ff6347",
+  "#b22222",
+  "#32cd32",
+  "#00bfff",
+  "#adff2f",
+  "#ba55d3",
+  "#ff8c00",
+  "#7cfc00",
+  "#8a2be2",
+  "#5f9ea0",
+  "#ffb6c1",
+  "#9acd32",
+  "#ffdead",
+  "#4169e1",
+  "#cd5c5c",
+  "#00ced1",
+  "#ffdab9",
+  "#b8860b",
+  "#dda0dd",
+  "#2f4f4f",
+  "#f0e68c",
+  "#ff1493",
+  "#48d1cc",
+  "#c71585",
+  "#deb887",
+  "#b0e0e6",
+  "#ff00ff",
+  "#66cdaa",
+  "#ff0000",
+  "#7b68ee",
+  "#98fb98",
+  "#191970",
+  "#ffd700",
+  "#00ff7f",
+  "#ff69b4",
+  "#008000",
+  "#00ffff",
+  "#708090",
+];
+
+let currentModalState = {
+  fromIndex: -1,
+  toIndex: -1,
+  tempMapping: [],
+  colors: [],
+};
+
 const framesContainer = document.getElementById("frames-container");
 const addFrameBtnStart = document.getElementById("add-frame-btn-start");
 const addFrameBtnEnd = document.getElementById("add-frame-btn-end");
@@ -13,7 +109,35 @@ const progressFill = document.getElementById("progress-fill");
 const progressText = document.getElementById("progress-text");
 const downloadLink = document.getElementById("download-link");
 
-addFrameBtnEnd.addEventListener("click", () => addFrame(framesContainer));
+function updateTransitionButtons() {
+  document
+    .querySelectorAll(".transition-editor-btn")
+    .forEach((el) => el.remove());
+  const panels = Array.from(framesContainer.querySelectorAll(".panel")).sort(
+    (a, b) =>
+      parseInt(a.dataset.frameIndex, 10) - parseInt(b.dataset.frameIndex, 10)
+  );
+
+  for (let i = 0; i < panels.length - 1; i++) {
+    const fromPanel = panels[i];
+    const fromIndex = fromPanel.dataset.frameIndex;
+    const toIndex = panels[i + 1].dataset.frameIndex;
+    if (state.framesData[fromIndex] && state.framesData[toIndex]) {
+      const transitionEditorBtn = document.createElement("button");
+      transitionEditorBtn.className = "transition-editor-btn";
+      transitionEditorBtn.dataset.fromIndex = fromIndex;
+      transitionEditorBtn.dataset.toIndex = toIndex;
+      transitionEditorBtn.title = "Настроить переход";
+      transitionEditorBtn.textContent = "Настроить переход";
+      fromPanel.append(transitionEditorBtn);
+    }
+  }
+}
+
+addFrameBtnEnd.addEventListener("click", () => {
+  addFrame(framesContainer);
+  updateTransitionButtons();
+});
 addFrameBtnStart.addEventListener("click", () => {
   addFrame(framesContainer);
 
@@ -49,6 +173,7 @@ addFrameBtnStart.addEventListener("click", () => {
     "Новый кадр добавлен в начало. Заполните данные Кадра 1.",
     "success"
   );
+  updateTransitionButtons();
 });
 
 framesContainer.addEventListener("click", (e) => {
@@ -56,6 +181,10 @@ framesContainer.addEventListener("click", (e) => {
     const button = e.target.closest(".load-btn");
     const frameIndex = parseInt(button.dataset.frameIndex, 10);
     loadFrame(frameIndex);
+  } else if (e.target.classList.contains("transition-editor-btn")) {
+    const fromIndex = parseInt(e.target.dataset.fromIndex, 10);
+    const toIndex = parseInt(e.target.dataset.toIndex, 10);
+    openMappingModal(fromIndex, toIndex);
   }
 });
 
@@ -122,10 +251,109 @@ function loadFrame(index) {
       duration: !isNaN(duration) && duration > 0 ? duration : null,
     };
     showStatus(`Кадр ${index + 1} успешно загружен`, "success");
+    updateTransitionButtons();
   } catch (error) {
     showStatus(`Ошибка загрузки кадра ${index + 1}: ${error.message}`, "error");
   }
 }
+
+function checkSaveability() {
+  const usedSourceIndexes = new Set(currentModalState.tempMapping);
+  const isSaveable =
+    usedSourceIndexes.size === currentModalState.tempMapping.length;
+  modalSaveBtn.disabled = !isSaveable;
+}
+
+function openMappingModal(fromIndex, toIndex) {
+  const fromFrame = state.framesData[fromIndex];
+  const toFrame = state.framesData[toIndex];
+
+  if (!fromFrame || !toFrame) {
+    showStatus("Загрузите оба кадра перед настройкой перехода.", "error");
+    return;
+  }
+
+  const fromPaths = fromFrame.svg.querySelectorAll("path");
+  const toPaths = toFrame.svg.querySelectorAll("path");
+
+  if (fromPaths.length !== toPaths.length) {
+    showStatus("Количество путей в кадрах должно совпадать.", "error");
+    return;
+  }
+
+  if (fromPaths.length === 0) {
+    showStatus("В кадрах нет путей для настройки.", "error");
+    return;
+  }
+
+  if (fromPaths.length > PATH_COLORS.length) {
+    showStatus(`Поддерживается до ${PATH_COLORS.length} путей.`, "error");
+    return;
+  }
+
+  currentModalState.fromIndex = fromIndex;
+  currentModalState.toIndex = toIndex;
+  currentModalState.colors = PATH_COLORS.slice(0, fromPaths.length);
+  const initialMapping =
+    state.mappings[fromIndex] || Array.from(Array(fromPaths.length).keys());
+  currentModalState.tempMapping = [...initialMapping];
+
+  const fromSvgClone = fromFrame.svg.cloneNode(true);
+  const toSvgClone = toFrame.svg.cloneNode(true);
+
+  fromSvgClone.querySelectorAll("path").forEach((path, i) => {
+    path.style.fill = currentModalState.colors[i];
+  });
+
+  toSvgClone.querySelectorAll("path").forEach((path, i) => {
+    const sourceIndex = currentModalState.tempMapping[i];
+    path.style.fill = currentModalState.colors[sourceIndex];
+    path.dataset.pathIndex = i;
+  });
+
+  modalFrameFrom.innerHTML = "";
+  modalFrameTo.innerHTML = "";
+  modalFrameFrom.appendChild(fromSvgClone);
+  modalFrameTo.appendChild(toSvgClone);
+
+  modalFrameTo.onclick = (e) => {
+    const targetPath = e.target.closest("path");
+    if (!targetPath) return;
+
+    const pathIndex = parseInt(targetPath.dataset.pathIndex, 10);
+    const currentSourceIndex = currentModalState.tempMapping[pathIndex];
+    const nextSourceIndex =
+      (currentSourceIndex + 1) % currentModalState.colors.length;
+
+    targetPath.style.fill = currentModalState.colors[nextSourceIndex];
+    currentModalState.tempMapping[pathIndex] = nextSourceIndex;
+
+    checkSaveability();
+  };
+
+  checkSaveability();
+  mappingModalOverlay.style.display = "flex";
+}
+
+modalCloseBtn.addEventListener("click", () => {
+  mappingModalOverlay.style.display = "none";
+});
+
+modalSaveBtn.addEventListener("click", () => {
+  state.mappings[currentModalState.fromIndex] = [
+    ...currentModalState.tempMapping,
+  ];
+  showStatus(
+    `Переход ${currentModalState.fromIndex + 1} → ${
+      currentModalState.toIndex + 1
+    } сохранен.`,
+    "success"
+  );
+  mappingModalOverlay.style.display = "none";
+  if (animationResult.firstChild) {
+    generateAnimation();
+  }
+});
 
 generateBtn.addEventListener("click", generateAnimation);
 
@@ -179,8 +407,15 @@ function generateAnimation() {
       const transitionDuration = validFrames[i].duration || defaultDuration;
       const nextFrameSVG = validFrames[(i + 1) % validFrames.length].svg;
       const targetPaths = Array.from(nextFrameSVG.querySelectorAll("path"));
+
+      const mapping = state.mappings[i];
+
       pathsToAnimate.forEach((path, pathIndex) => {
-        const targetPathEl = targetPaths[pathIndex];
+        const targetPathIndex = mapping
+          ? mapping.indexOf(pathIndex)
+          : pathIndex;
+        const targetPathEl = targetPaths[targetPathIndex];
+
         if (targetPathEl) {
           const animationProps = {
             duration: transitionDuration,
@@ -277,48 +512,69 @@ document.getElementById("export-svg").addEventListener("click", async () => {
           ${morphSrc}
           gsap.registerPlugin(MorphSVGPlugin);
           
-          const pathSequences = ${JSON.stringify(pathSequences)};
-          const duration = ${durationSlider.value};
-          
-          const masterTl = gsap.timeline();
-          Object.keys(pathSequences).forEach(id => {
-            const pathEl = document.getElementById(id);
-            if (pathEl) {
-              const sequence = pathSequences[id];
-              if (sequence.length > 1) {
-                const pathTl = gsap.timeline({
-                    repeat: -1,
-                    yoyo: true 
-                });
-                const initialState = sequence[0];
-                const initialProps = {};
-                for (const attr in initialState) {
-                    if (attr === 'd') {
-                        initialProps.morphSVG = initialState[attr];
-                    } else {
-                        initialProps[attr] = initialState[attr];
-                    }
-                }
-                gsap.set(pathEl, initialProps);
-                for (let i = 1; i < sequence.length; i++) {
-                    const state = sequence[i];
-                    const props = { 
-                        duration: duration, 
-                        ease: "power1.inOut" 
-                    };
-                    for (const attr in state) {
-                        if (attr === 'd') {
-                            props.morphSVG = state[attr];
-                        } else {
-                            props[attr] = state[attr];
-                        }
-                    }
-                    pathTl.to(pathEl, props);
-                }
-                masterTl.add(pathTl, 0);
+          const pathDataByFrame = ${JSON.stringify(pathSequences)};
+          const mappings = ${JSON.stringify(state.mappings)};
+          const totalFrames = ${validFrames.length};
+          const defaultDuration = ${durationSlider.value};
+          const durations = ${JSON.stringify(
+            validFrames.map((f) => f.duration)
+          )};
+
+          const masterTl = gsap.timeline({ repeat: -1 });
+
+          Object.keys(pathDataByFrame).forEach(pathId => {
+              const pathEl = document.getElementById(pathId);
+              if (!pathEl) return;
+              
+              const initialState = pathDataByFrame[pathId][0];
+              const initialProps = { attr: {} };
+              let hasAttr = false;
+              for (const attr in initialState) {
+                  if (attr === 'd') {
+                      initialProps.morphSVG = initialState[attr];
+                  } else {
+                      initialProps.attr[attr] = initialState[attr];
+                      hasAttr = true;
+                  }
               }
-            }
+              if (!hasAttr) delete initialProps.attr;
+              gsap.set(pathEl, initialProps);
           });
+
+          for (let i = 0; i < totalFrames; i++) {
+              const transitionDuration = durations[i] || defaultDuration;
+              const nextFrameIndex = (i + 1) % totalFrames;
+              const mapping = mappings[i];
+
+              Object.keys(pathDataByFrame).forEach(pathId => {
+                  const pathEl = document.getElementById(pathId);
+                  if (!pathEl) return;
+                  const sourcePathIndex = parseInt(pathId.replace('morph-path-', ''), 10);
+
+                  const targetPathIndex = mapping ? mapping.indexOf(sourcePathIndex) : sourcePathIndex;
+                  const targetPathId = 'morph-path-' + targetPathIndex;
+                  
+                  const endState = pathDataByFrame[targetPathId] ? pathDataByFrame[targetPathId][nextFrameIndex] : null;
+                  if (!endState) return;
+
+                  const props = { 
+                      duration: transitionDuration, 
+                      ease: "power1.inOut",
+                      attr: {}
+                  };
+                  let hasAttr = false;
+                  for (const attr in endState) {
+                      if (attr === 'd') {
+                          props.morphSVG = endState[attr];
+                      } else {
+                          props.attr[attr] = endState[attr];
+                          hasAttr = true;
+                      }
+                  }
+                  if (!hasAttr) delete props.attr;
+                  masterTl.to(pathEl, props, "frame" + i);
+              });
+          }
         `;
     svgElement.appendChild(script);
     const serializer = new XMLSerializer();
